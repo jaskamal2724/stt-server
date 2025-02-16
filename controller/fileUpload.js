@@ -2,6 +2,11 @@ import fs from 'fs';
 import FormData from "form-data"
 import axios from "axios"
 import { PrismaClient } from '@prisma/client';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.SUPABASE_URL
+const supabaseKey = process.env.SUPABASE_API_KEY
+const supabase = createClient(supabaseUrl, supabaseKey)
 
 export async function AudiofielUpload(req, res) {
     const prisma = new PrismaClient();
@@ -27,17 +32,12 @@ export async function AudiofielUpload(req, res) {
 
         if (response) {
             async function createUser() {
-                const user = await prisma.user.create({
-                    data: {
-                        transcription: response.data.text
-                    },
-                });
-                console.log(user);
-                res.status(200).json(user);
+                const { data, error } = await supabase.from("User").insert({ transcription: response.data.text }).select("transcription")
+                console.log(data?.[0].transcription);
+                res.status(200).json(data?.[0].transcription);
             }
 
             createUser();
-
         }
         else {
             return res.status(400).json({ msg: "Api not responded" })
